@@ -1,4 +1,4 @@
-# CodeIntent: Why The Code Is Like This 🔍
+# CodeIntent — AI-Powered "Codebase Intent & Archaeology" 🔍
 
 [![Hackathon](https://img.shields.io/badge/hackFront%20India-2026-blue)](https://whereuelevate.com/drills/hackfrontindia-2026)
 [![Track](https://img.shields.io/badge/Track-AI%20%26%20Developer%20Tools-purple)](#)
@@ -84,8 +84,8 @@ flowchart TD
 ### Option A: Local Run (Zero Configuration)
 ```bash
 # 1. Clone repository
-git clone https://github.com/arshsri0513/why-the-code-is-like-this.git
-cd why-the-code-is-like-this
+git clone https://github.com/arshsri0513/code-intent.git
+cd code-intent
 
 # 2. Install dependencies
 pip install -r backend/requirements.txt
