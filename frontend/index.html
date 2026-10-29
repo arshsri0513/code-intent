@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Why The Code Is Like This • Evidence-Backed GraphRAG</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #0b1120; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    .glass-card { background: rgba(17, 24, 39, 0.85); border: 1px solid rgba(55, 65, 81, 0.8); backdrop-filter: blur(12px); }
+    .accent-glow { box-shadow: 0 0 30px rgba(56, 189, 248, 0.15); }
+  </style>
+</head>
+<body class="text-slate-200 min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-slate-800 bg-slate-900/60 sticky top-0 z-50 backdrop-blur-md">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="h-9 w-9 rounded-lg bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-400">
+          <i class="fa-solid fa-diagram-project text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base font-semibold text-white tracking-tight flex items-center gap-2">
+            CodeIntent <span class="text-xs px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">Why The Code Is Like This</span>
+          </h1>
+          <p class="text-xs text-slate-400">hackFront India 2026 • AI & Developer Tools Track</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-3 text-xs">
+        <span class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-300">
+          <i class="fa-solid fa-users text-purple-400"></i> Team: <strong class="text-white">HACK1MAW</strong>
+        </span>
+        <a href="https://github.com/arshsri0513/why-the-code-is-like-this" target="_blank" class="flex items-center gap-1.5 px-3 py-1 rounded-md bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition">
+          <i class="fa-brands fa-github"></i> <span class="font-medium">arshsri0513</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-5xl mx-auto px-4 py-8 flex-1 w-full space-y-6">
+
+    <!-- Hero / Query Section -->
+    <div class="text-center space-y-3 pt-4">
+      <h2 class="text-3xl font-bold text-white tracking-tight sm:text-4xl">
+        Answer what code cannot: <span class="text-sky-400">Why is it like this?</span>
+      </h2>
+      <p class="text-sm text-slate-400 max-w-2xl mx-auto">
+        Query institutional knowledge across git commits, merged pull requests, and incident post-mortems using an evidence-backed Knowledge Graph.
+      </p>
+
+      <!-- Query Box -->
+      <div class="pt-4 max-w-3xl mx-auto">
+        <div class="relative flex items-center">
+          <i class="fa-solid fa-magnifying-glass absolute left-4 text-slate-400"></i>
+          <input id="queryInput" type="text" 
+                 placeholder="e.g. Why is connection timeout set to 5000ms? or Why was auth cache disabled?" 
+                 class="w-full pl-11 pr-28 py-3.5 rounded-xl bg-slate-900 border border-slate-700 text-white placeholder-slate-500 focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-sm">
+          <button id="searchBtn" onclick="runQuery()" 
+                  class="absolute right-2 px-4 py-2 rounded-lg bg-sky-600 hover:bg-sky-500 text-white text-xs font-semibold tracking-wide transition flex items-center gap-1.5">
+            <span>Ask Graph</span>
+            <i class="fa-solid fa-arrow-right text-[10px]"></i>
+          </button>
+        </div>
+
+        <!-- Sample Query Chips -->
+        <div class="pt-3 flex flex-wrap items-center justify-center gap-2 text-xs">
+          <span class="text-slate-500 font-medium mr-1">Try sample:</span>
+          <button onclick="setQuery('Why is the connection timeout set to 5000ms?')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition">
+            ⏱️ 5000ms Timeout
+          </button>
+          <button onclick="setQuery('Why was in-memory token cache disabled in middleware?')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition">
+            🛡️ Auth Cache Disabled
+          </button>
+          <button onclick="setQuery('Why is the max retry attempts set to 3?')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-slate-300 transition">
+            🔁 3 Max Retries
+          </button>
+          <button onclick="setQuery('Why was the legacy worker queue migrated?')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-amber-300/90 transition">
+            ⚠️ Superseded Queue
+          </button>
+          <button onclick="setQuery('Why is the database password stored in plaintext?')" class="px-2.5 py-1 rounded-md bg-slate-800/80 hover:bg-slate-700 border border-slate-700/60 text-rose-400/90 transition">
+            🚫 Undocumented (Refusal)
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading State -->
+    <div id="loadingIndicator" class="hidden text-center py-8">
+      <div class="inline-flex items-center gap-3 px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sky-400 text-xs">
+        <i class="fa-solid fa-circle-notch fa-spin"></i> Traversing Neo4j Knowledge Graph & Evidence Chains...
+      </div>
+    </div>
+
+    <!-- Results Section -->
+    <div id="resultsCard" class="space-y-4"></div>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 py-4 text-center text-xs text-slate-500">
+    Built for <strong>hackFront India 2026</strong> • Team HACK1MAW • Lead: Ansh Srivastava (<a href="https://github.com/arshsri0513" class="text-sky-400 hover:underline">@arshsri0513</a>)
+  </footer>
+
+  <script>
+    function setQuery(text) {
+      document.getElementById('queryInput').value = text;
+      runQuery();
+    }
+
+    async function runQuery() {
+      const query = document.getElementById('queryInput').value.trim();
+      if (!query) return;
+
+      const resultsDiv = document.getElementById('resultsCard');
+      const loader = document.getElementById('loadingIndicator');
+      loader.classList.remove('hidden');
+      resultsDiv.innerHTML = '';
+
+      try {
+        const res = await fetch('/api/query', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: query })
+        });
+        const data = await res.json();
+        loader.classList.add('hidden');
+        renderResults(data);
+      } catch (err) {
+        loader.classList.add('hidden');
+        resultsDiv.innerHTML = `
+          <div class="glass-card p-4 rounded-xl border border-rose-500/30 text-rose-300 text-sm">
+            <i class="fa-solid fa-triangle-exclamation mr-2"></i> Error connecting to backend API: ${err.message}
+          </div>
+        `;
+      }
+    }
+
+    function renderResults(data) {
+      const resultsDiv = document.getElementById('resultsCard');
+
+      if (!data.success) {
+        resultsDiv.innerHTML = `
+          <div class="glass-card p-6 rounded-xl border border-rose-500/30 space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-1 rounded bg-rose-500/10 text-rose-400 text-xs font-semibold border border-rose-500/20">
+                🛡️ Zero-Hallucination Guardrail Triggered
+              </span>
+              <span class="text-xs text-slate-400">Confidence: 0.0%</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">No Historical Decision Found</h3>
+            <p class="text-sm text-slate-300">${data.governing_decision}</p>
+            <p class="text-xs text-slate-400"><strong>Rationale:</strong> ${data.confidence_rationale}</p>
+          </div>
+        `;
+        return;
+      }
+
+      const isSuperseded = data.supersession && data.supersession.is_superseded;
+      const supersessionBadge = isSuperseded ? `
+        <div class="p-3 rounded-lg bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-2.5">
+          <i class="fa-solid fa-triangle-exclamation text-base mt-0.5"></i>
+          <div>
+            <strong class="font-semibold">TEMPORAL SUPERSEDED WARNING:</strong>
+            <span>This historical decision was superseded on ${data.supersession.superseded_at} by: <em>${data.supersession.superseded_by}</em>.</span>
+          </div>
+        </div>
+      ` : `
+        <div class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium">
+          <i class="fa-solid fa-circle-check"></i> Active Governing Policy
+        </div>
+      `;
+
+      let evidenceHtml = '';
+      data.evidence_chain.forEach(item => {
+        let icon = item.source_type === 'PullRequest' ? 'fa-code-pull-request text-purple-400' :
+                   item.source_type === 'Commit' ? 'fa-code-commit text-sky-400' : 'fa-bug text-rose-400';
+        evidenceHtml += `
+          <div class="p-3.5 rounded-lg bg-slate-900/80 border border-slate-800 space-y-1.5">
+            <div class="flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2">
+                <i class="fa-solid ${icon}"></i>
+                <span class="font-semibold text-white">${item.identifier}</span>
+                <span class="text-slate-400">by ${item.author}</span>
+              </div>
+              <span class="text-slate-500 font-mono">${item.timestamp}</span>
+            </div>
+            <div class="text-xs text-slate-300 font-medium">${item.title}</div>
+            ${item.snippet ? `<div class="text-xs text-slate-400 italic bg-slate-950/60 p-2 rounded border border-slate-800/80">${item.snippet}</div>` : ''}
+          </div>
+        `;
+      });
+
+      resultsDiv.innerHTML = `
+        <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-5 accent-glow">
+          
+          <!-- Top Row: Entity & Confidence -->
+          <div class="flex flex-wrap items-center justify-between gap-3 border-b border-slate-800 pb-4">
+            <div>
+              <span class="text-xs font-mono text-sky-400 uppercase tracking-wider">Governing Code Entity</span>
+              <h3 class="text-lg font-bold text-white">${data.target_entity || 'Identified Subsystem'}</h3>
+            </div>
+            <div class="flex items-center gap-3">
+              ${supersessionBadge}
+              <div class="text-right">
+                <div class="text-xs text-slate-400">Confidence</div>
+                <div class="text-base font-bold text-sky-400">${(data.confidence_score * 100).toFixed(0)}%</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Governing Rationale -->
+          <div class="space-y-1.5">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Historical Rationale & Decision</div>
+            <p class="text-sm text-slate-200 leading-relaxed bg-slate-900/50 p-3.5 rounded-xl border border-slate-800">
+              ${data.governing_decision}
+            </p>
+          </div>
+
+          <!-- Who to ask -->
+          <div class="flex items-center gap-2 text-xs text-slate-300 bg-slate-800/40 px-3 py-2 rounded-lg border border-slate-700/40">
+            <i class="fa-solid fa-user-tag text-purple-400"></i>
+            <span><strong>Who to ask / Maintainer Lineage:</strong> ${data.who_to_ask || '@alex_eng'}</span>
+          </div>
+
+          <!-- Evidence Chain -->
+          <div class="space-y-2">
+            <div class="text-xs font-semibold text-slate-400 uppercase tracking-wide flex items-center justify-between">
+              <span>Verifiable Evidence Chain (${data.evidence_chain.length} Citations)</span>
+              <span class="text-[10px] text-slate-500 font-mono">Linked to Git & Incident History</span>
+            </div>
+            <div class="space-y-2">
+              ${evidenceHtml}
+            </div>
+          </div>
+
+        </div>
+      `;
+    }
+
+    // Auto-trigger first demo query on page load
+    window.onload = () => {
+      setQuery('Why is the connection timeout set to 5000ms?');
+    };
+  </script>
+</body>
+</html>

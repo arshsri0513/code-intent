@@ -1,0 +1,255 @@
+{
+  "repository": {
+    "id": "sample-gateway",
+    "name": "enterprise-auth-gateway",
+    "url": "https://github.com/arshsri0513/enterprise-auth-gateway"
+  },
+  "nodes": [
+    {
+      "id": "entity:timeout_5000",
+      "label": "CONNECTION_TIMEOUT = 5000",
+      "type": "CodeEntity",
+      "properties": {
+        "file": "src/client/http_client.py",
+        "symbol": "DEFAULT_TIMEOUT_MS",
+        "value": "5000",
+        "line": 42
+      }
+    },
+    {
+      "id": "decision:dec_114",
+      "label": "Standardize Gateway Timeout to 5000ms",
+      "type": "Decision",
+      "properties": {
+        "summary": "Increased default client timeout from 1500ms to 5000ms to allow upstream microservices to tolerate regional transit spikes without aborting.",
+        "rationale": "Prior 1500ms limit triggered cascading 504 drops whenever AWS transit gateway suffered sub-second latency jitter.",
+        "date": "2023-11-14",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "id": "pr:pr_114",
+      "label": "PR #114: Mitigate Gateway 504 Timeout Cascades",
+      "type": "PullRequest",
+      "properties": {
+        "number": 114,
+        "author": "alex_eng",
+        "reviewer": "sarah_lead",
+        "date": "2023-11-14",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/pull/114",
+        "discussion": "@alex_eng: 'Under load tests, 1.5s is too tight when Redis cache misses occur. 5000ms gives downstream services enough runway.' Approved by @sarah_lead."
+      }
+    },
+    {
+      "id": "incident:inc_108",
+      "label": "INC-108: Production 504 Outage Storm",
+      "type": "Incident",
+      "properties": {
+        "severity": "P1",
+        "date": "2023-11-12",
+        "root_cause": "Aggressive 1500ms timeout caused 40% of user checkout requests to abort prematurely during peak sale load.",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/issues/108"
+      }
+    },
+    {
+      "id": "commit:c_e89f2a",
+      "label": "Commit e89f2a1: Bump client timeout to 5000ms",
+      "type": "Commit",
+      "properties": {
+        "sha": "e89f2a176b9c",
+        "author": "alex_eng",
+        "date": "2023-11-14",
+        "message": "fix(client): bump default socket and read timeout to 5000ms"
+      }
+    },
+    {
+      "id": "entity:auth_cache",
+      "label": "AUTH_CACHE_ENABLED = False",
+      "type": "CodeEntity",
+      "properties": {
+        "file": "src/auth/middleware.py",
+        "symbol": "ENABLE_LOCAL_TOKEN_CACHE",
+        "value": "False",
+        "line": 18
+      }
+    },
+    {
+      "id": "decision:dec_205",
+      "label": "Disable In-Memory Token Caching",
+      "type": "Decision",
+      "properties": {
+        "summary": "Completely deactivated local process token caching in favor of strict remote Redis validation on every request.",
+        "rationale": "High-concurrency race condition allowed revoked tenant tokens to remain valid for up to 60 seconds on worker nodes.",
+        "date": "2024-02-08",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "id": "pr:pr_205",
+      "label": "PR #205: Disable In-Memory Session Cache to Prevent Token Replay",
+      "type": "PullRequest",
+      "properties": {
+        "number": 205,
+        "author": "priya_sec",
+        "reviewer": "marcus_arch",
+        "date": "2024-02-08",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/pull/205",
+        "discussion": "@priya_sec: 'Memory cache has an asynchronous invalidation gap. A revoked token can still authenticate requests on node 3. Disabling local cache until distributed pub/sub sync is built.'"
+      }
+    },
+    {
+      "id": "incident:inc_142",
+      "label": "INC-142: Revoked Admin Session Leak Vulnerability",
+      "type": "Incident",
+      "properties": {
+        "severity": "P0-Security",
+        "date": "2024-02-07",
+        "root_cause": "Local worker memory cache served cached permissions for 45 seconds after user permissions were revoked in IAM.",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/issues/142"
+      }
+    },
+    {
+      "id": "entity:retry_limit",
+      "label": "MAX_RETRY_ATTEMPTS = 3",
+      "type": "CodeEntity",
+      "properties": {
+        "file": "src/utils/retry_handler.py",
+        "symbol": "MAX_RETRIES",
+        "value": "3",
+        "line": 64
+      }
+    },
+    {
+      "id": "decision:dec_310",
+      "label": "Cap Retries to 3 with Truncated Exponential Jitter",
+      "type": "Decision",
+      "properties": {
+        "summary": "Enforced strict maximum of 3 retries with full jitter backoff.",
+        "rationale": "Prevented downstream thundering herd problem when billing webhooks fail during partner outages.",
+        "date": "2024-05-19",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "id": "pr:pr_310",
+      "label": "PR #310: Implement Jittered Retry Policy for Webhook Dispatch",
+      "type": "PullRequest",
+      "properties": {
+        "number": 310,
+        "author": "david_sre",
+        "reviewer": "alex_eng",
+        "date": "2024-05-19",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/pull/310",
+        "discussion": "@david_sre: 'Uncapped retries DDoS'ed our own downstream notification cluster. 3 retries with exponential backoff captures 98% of transient failures without causing a thundering herd.'"
+      }
+    },
+    {
+      "id": "entity:worker_queue",
+      "label": "WORKER_BACKEND = 'celery'",
+      "type": "CodeEntity",
+      "properties": {
+        "file": "src/queue/config.py",
+        "symbol": "QUEUE_DRIVER",
+        "value": "celery",
+        "line": 12
+      }
+    },
+    {
+      "id": "decision:dec_legacy_42",
+      "label": "Legacy Synchronous Background Queue",
+      "type": "Decision",
+      "properties": {
+        "summary": "Used basic Python threading queue for local background jobs.",
+        "rationale": "Initial MVP prototype simplicity.",
+        "date": "2022-04-10",
+        "status": "SUPERSEDED"
+      }
+    },
+    {
+      "id": "decision:dec_189",
+      "label": "Migrate Worker Queue to Distributed Celery + RabbitMQ",
+      "type": "Decision",
+      "properties": {
+        "summary": "Replaced single-process Python threads with distributed Celery workers.",
+        "rationale": "Single process queue suffered memory starvation and process death under 10k+ concurrent asynchronous webhooks.",
+        "date": "2024-07-22",
+        "status": "ACTIVE"
+      }
+    },
+    {
+      "id": "pr:pr_189",
+      "label": "PR #189: Distributed Queue Architecture Overhaul",
+      "type": "PullRequest",
+      "properties": {
+        "number": 189,
+        "author": "marcus_arch",
+        "reviewer": "sarah_lead",
+        "date": "2024-07-22",
+        "url": "https://github.com/arshsri0513/enterprise-auth-gateway/pull/189",
+        "discussion": "@marcus_arch: 'PR #42's threading queue is deprecated. Superseded by Celery distributed workers for horizontal scale.'"
+      }
+    }
+  ],
+  "edges": [
+    {
+      "source": "commit:c_e89f2a",
+      "target": "entity:timeout_5000",
+      "relation": "MODIFIES"
+    },
+    {
+      "source": "pr:pr_114",
+      "target": "decision:dec_114",
+      "relation": "INTRODUCES"
+    },
+    {
+      "source": "pr:pr_114",
+      "target": "incident:inc_108",
+      "relation": "RESOLVES"
+    },
+    {
+      "source": "decision:dec_114",
+      "target": "entity:timeout_5000",
+      "relation": "GOVERNS"
+    },
+    {
+      "source": "pr:pr_205",
+      "target": "decision:dec_205",
+      "relation": "INTRODUCES"
+    },
+    {
+      "source": "pr:pr_205",
+      "target": "incident:inc_142",
+      "relation": "RESOLVES"
+    },
+    {
+      "source": "decision:dec_205",
+      "target": "entity:auth_cache",
+      "relation": "GOVERNS"
+    },
+    {
+      "source": "pr:pr_310",
+      "target": "decision:dec_310",
+      "relation": "INTRODUCES"
+    },
+    {
+      "source": "decision:dec_310",
+      "target": "entity:retry_limit",
+      "relation": "GOVERNS"
+    },
+    {
+      "source": "decision:dec_189",
+      "target": "entity:worker_queue",
+      "relation": "GOVERNS"
+    },
+    {
+      "source": "decision:dec_189",
+      "target": "decision:dec_legacy_42",
+      "relation": "SUPERSEDES"
+    },
+    {
+      "source": "pr:pr_189",
+      "target": "decision:dec_189",
+      "relation": "INTRODUCES"
+    }
+  ]
+}

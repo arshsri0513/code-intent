@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+      - NEO4J_URI=bolt://neo4j:7687
+      - NEO4J_USERNAME=neo4j
+      - NEO4J_PASSWORD=hackfrontpassword
+    depends_on:
+      neo4j:
+        condition: service_healthy
+    volumes:
+      - ./backend/app:/app/app
+
+  neo4j:
+    image: neo4j:5.18-community
+    ports:
+      - "7474:7474"
+      - "7687:7687"
+    environment:
+      - NEO4J_AUTH=neo4j/hackfrontpassword
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider localhost:7474 || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - neo4j_data:/data
+
+volumes:
+  neo4j_data:
